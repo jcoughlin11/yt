@@ -109,6 +109,51 @@ def _accumulate_scalar_field(p, field_vals):
     return accum
 
 
+def get_row_major_index(ncells, cell_ind):
+    """
+    Converts the cell indices (i_1, i_2, ..., i_N) to the corresponding
+    row-major index I.
+
+    The field data for each cell in the node are stored in an N dimensional
+    array with shape (n_1, n_2, ..., n_N), where n_i is the number of cells along
+    dimension i. The N dimensional index of the current cell under consideration,
+    `cell_ind` is (i_1, i_2, ..., i_N). However, accessing the value of a single
+    element in a multi-dimensional array (unflattened data) with another array
+    (cell_ind) is problematic.
+
+    As such, we flatten the data, which puts the data into row-major format.
+    The current cell under consideration can then be accessed by converting
+    cell_ind to the corresponding row-major index I.
+
+    The location I in the row-major array of the cell given by (1_1, i_2, ..., i_N)
+    is:
+
+        I = i_N + n_N * (i_{N-1} + n_{N-1} * (...(i_2 + n_2 * i)...)
+
+    which in three dimensions is:
+
+        I = k + n_z * (j + n_y * i)
+
+    Parameters
+    ----------
+    ncells : tuple
+        Contains the number of cells along each dimension.
+
+    cell_ind : tuple
+        Contains the integer values of the index of the current cell in each
+        dimension (i.e., this is (i_1, i_2, ..., i_N)).
+
+    Returns
+    -------
+    I : int
+        The row-major index corresponding to cell_ind.
+    """
+    I = cell_ind[0]
+    for idx in range(1, len(ncells)):
+        I = cell_ind[idx] + ncells[idx] * I
+    return I
+
+
 class Accumulators:
     r"""
     Container for creating and storing the path integrals of various
@@ -138,39 +183,90 @@ class Accumulators:
         self.ds         = ds
         self.ad         = ds.all_data()
         self.accum      = []
+        self.left_edge  = self.ds.domain_left_edge
+        self.right_edge = self.ds.domain_right_edge
 
-    def _join_field_components(self, field):
+    def _get_tree(self, field, is_vector):
         r"""
-        This function takes the disparate components of the field,
-        which are stored in the three different arrays fx, fy, and fz,
-        and joins them into one ndarray. The result needs to have a
-        shape of  (nGridCells, nDims)
+        Creates an AMRKDTree and then adds the field to it.
 
         Parameters
         ----------
-        field : iterable
-            Contains the components of the field to be accumulated
-            along the desired paths.
+        field : YTFieldData, iterable
+            Either the scalar field to add to the tree or an iterable
+            containing the components of the vector field to add.
+
+        is_vector : bool
+            If True, then `field` is a vector and it is assumed that it's
+            an iterable containing the x, y, and z components of the field.
+            Otherwise, the field is assumed to be a scalar field.
 
         Returns
         -------
-        field_grid_vals : np.ndarray
-            An array of shape (n_cells, n_field_components). This form
-            allows for easier matrix manipulation.
+        tree : AMRKDTree
+            An AMRKDTree for the dataset containing the given field values.
         """
-        # Calling np.stack results in the unit-ful array having
-        # units of 'dimensionless.' It's easier to to just save the
-        # original units, work with the raw values, and then add the
-        # units back in at the end
-        unit = self.ad[field[0]].units
-        # Strip units from coordinates
-        x_field = self.ad[field[0]].d
-        y_field = self.ad[field[1]].d
-        z_field = self.ad[field[2]].d
-        field_grid_vals = np.stack((x_field, y_field, z_field), axis=1)
-        # Add units back
-        field_grid_vals = YTArray(field_grid_vals, unit)
-        return field_grid_vals
+        tree = AMRKDTree(self.ds)
+        if is_vector:
+            use_log = [False for i in range(len(field))]
+            field = [self.ad._determine_fields(field[i])[0] for i in range(len(field))]
+        else:
+            use_log = [False]
+            field = [self.ad._determine_fields(field)[0]]
+        tree.set_fields(field, use_log, False)
+        return tree
+
+    def _get_path_field_values(tree, path, idx, vals, npts):
+        r"""
+        Determines the value of the field at each point along the path.
+
+        Parameters
+        ----------
+        tree : AMRKDTree
+            An AMRKDTree for the dataset containing the given field values.
+
+        path : np.ndarray
+            The N x 3 array containing the x, y, and z coordinates of the
+            N points used to define the path.
+
+        Returns
+        -------
+        path_field_values : np.ndarray
+            The array containing the field values at each point along the
+            path.
+        """
+        # TODO: UNITS!!!
+        node = tree.locate_node(path[idx])
+        # Data is a list, with one eleement for each field component
+        data = node.data.my_data
+        # Number of cells in the node
+        ncells = data[0].shape
+        # Put the data in a more convenient form: ncells x ndims array
+        data = [d.flatten() for d in data]
+        data = np.stack(data, axis=1)
+        # Cell width
+        node_left_edge = node.get_left_edge()
+        node_right_edge = node.get_right_edge()
+        cell_size = (node_right_edge - node_left_edge) / ncells
+        while idx < npts:
+            # Figure out which cell in the node the point falls within
+            # Origin of node can be offset from origin of origin of volume,
+            # so we have to subtract it off to get the right cell indices
+            cell_ind = ((path[idx] - node_left_edge) / cell_size).astype(int)
+            # Access the value of the field at that index. Accessing a single
+            # element of a multi-dimensional array using another array is
+            # problematic. Flatten and use a row-major index, indstead  
+            I = get_row_major_index(ncells, cell_ind)
+            # Get the value of each component for the current cell
+            vals[idx] = data[I] 
+            # Go to next point
+            idx += 1
+            # See if new point is still within the same node
+            if not np.sum(np.logical_or(path[idx] < node_left_edge, path[idx] >= node_right_edge)):
+                vals, idx = self._get_path_field_values(tree, path, idx, vals, npts)
+        return vals, idx
+                
+
 
     def accumulate(self, field, is_vector=None):
         r"""
@@ -179,11 +275,13 @@ class Accumulators:
 
         Parameters
         ----------
-        field : YTFieldData, tuple
-            The name of the field to integrate along the paths. If this
-            is a vector field, field should be an iterable containing
-            the components of the field (i.e, field[0] is the x-component
-            data, field[1] is the y-component, etc.).
+        field : field name, iterable of field names
+            The field to integrate along the paths. If this is a vector
+            field, field should be an iterable containing the components
+            of the field (i.e, field[0] is the x-component data, field[1]
+            is the y-component, etc.). This is the name(s) of the field
+            (components), e.g., ('gas', 'density') for a scalar or
+            [('gas', 'x'), ('gas', 'y'), ('gas', 'z')] for a vector.
 
         is_vector : bool
             If True, field is a vector field. If False, then field is
@@ -196,16 +294,17 @@ class Accumulators:
         """
         if is_vector is None:
             raise ValueError("`is_vector` parameter not set.")
-        if is_vector:
-            # Join the components together into a more convenient form
-            field = self._join_field_components(field)
-        # Loop over each path
+        # Build tree and add field to it
+        tree = self._get_tree(field, is_vector)
+        # Loop over each path the field is to be accumulated along
         for p in self.paths:
-            # Calculate the values of the field at each point
-            field_vals = ds.find_field_values_at_points(field, p)
-            # Integrate the field along the path based on whether or not
-            # the field is a vector or scalar field
+            # Get the value of the field at each point on the path
+            npts = len(p)
+            if npts < 2:
+                raise ValueError("Invalid path. Must have at least 2 points.")
+            values = np.zeros(p.shape)
+            values, _ = self._get_path_field_values(tree, p, 0, values, npts)
             if is_vector:
-                self.accum.append(_accumulate_vector_field(p, field_vals))
+                self.accum.append(_accumulate_vector_field(p, values))
             else:
-                self.accum.append(_accumulate_scalar_field(p, field_vals))
+                self.accum.append(_accumulate_scalar_field(p, values))
