@@ -216,7 +216,7 @@ class Accumulators:
         tree.set_fields(field, use_log, False)
         return tree
 
-    def _get_path_field_values(tree, path, idx, vals, npts):
+    def _get_path_field_values(self, tree, path, idx, vals, npts):
         r"""
         Determines the value of the field at each point along the path.
 
@@ -237,7 +237,7 @@ class Accumulators:
         """
         # TODO: UNITS!!!
         node = tree.locate_node(path[idx])
-        # Data is a list, with one eleement for each field component
+        # Data is a list, with one element for each field component
         data = node.data.my_data
         # Number of cells in the node
         ncells = data[0].shape
@@ -249,6 +249,13 @@ class Accumulators:
         node_right_edge = node.get_right_edge()
         cell_size = (node_right_edge - node_left_edge) / ncells
         while idx < npts:
+            # Make sure point is within domain
+            left_check = path[idx] < self.left_edge
+            right_check = path[idx] >= self.right_edge
+            if not np.sum(np.logical_or(left_check, right_check)):
+                msg = f"Point `{path[idx]}` at index `{idx}` outside domain bounds."
+                msg += f"LE: `{self.left_edge}`, RE: `{self.right_edge}`"
+                raise ValueError(msg)
             # Figure out which cell in the node the point falls within
             # Origin of node can be offset from origin of origin of volume,
             # so we have to subtract it off to get the right cell indices
@@ -262,12 +269,12 @@ class Accumulators:
             # Go to next point
             idx += 1
             # See if new point is still within the same node
-            if not np.sum(np.logical_or(path[idx] < node_left_edge, path[idx] >= node_right_edge)):
+            left_check = path[idx] < node_left_edge
+            right_check = path[idx] >= node_right_edge
+            if not np.sum(np.logical_or(left_check, right_check)):
                 vals, idx = self._get_path_field_values(tree, path, idx, vals, npts)
         return vals, idx
                 
-
-
     def accumulate(self, field, is_vector=None):
         r"""
         This function is the driver function for integrating the desired
