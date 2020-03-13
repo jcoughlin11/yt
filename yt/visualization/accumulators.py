@@ -1,6 +1,7 @@
 import numpy as np
 
 from yt.units.yt_array import YTArray
+from yt.utilities.amr_kdtree.api import AMRKDTree
 
 
 def _accumulate_vector_field(path, field_vals):
@@ -182,7 +183,7 @@ class Accumulators:
         self.paths      = paths
         self.ds         = ds
         self.ad         = ds.all_data()
-        self.accum      = []
+        self.accum      = {}
         self.left_edge  = self.ds.domain_left_edge
         self.right_edge = self.ds.domain_right_edge
 
@@ -209,7 +210,8 @@ class Accumulators:
         tree = AMRKDTree(self.ds)
         if is_vector:
             use_log = [False for i in range(len(field))]
-            field = [self.ad._determine_fields(field[i])[0] for i in range(len(field))]
+            vec_comps = [field + '_' + c for c in 'xyz']
+            field = [self.ad._determine_fields(f)[0] for f in vec_comps]
         else:
             use_log = [False]
             field = [self.ad._determine_fields(field)[0]]
@@ -301,6 +303,7 @@ class Accumulators:
         """
         if is_vector is None:
             raise ValueError("`is_vector` parameter not set.")
+        self.accum[field] = []
         # Build tree and add field to it
         tree = self._get_tree(field, is_vector)
         # Loop over each path the field is to be accumulated along
@@ -312,6 +315,16 @@ class Accumulators:
             values = np.zeros(p.shape)
             values, _ = self._get_path_field_values(tree, p, 0, values, npts)
             if is_vector:
-                self.accum.append(_accumulate_vector_field(p, values))
+                self.accum[field].append(_accumulate_vector_field(p, values))
             else:
-                self.accum.append(_accumulate_scalar_field(p, values))
+                self.accum[field].append(_accumulate_scalar_field(p, values))
+
+    def clear(self, field=None):
+        r"""
+        Clears out the accum attribute. If `field` is specified, then only
+        values corresponding to that field are cleared.
+        """
+        if field:
+            del self.accum[field]
+        else:
+            self.accum = {}
