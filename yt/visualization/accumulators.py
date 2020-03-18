@@ -1,5 +1,6 @@
 import numpy as np
 
+from yt.funcs import ensure_list
 from yt.units.yt_array import YTArray
 from yt.utilities.amr_kdtree.api import AMRKDTree
 
@@ -70,7 +71,7 @@ def _accumulate_vector_field(path, field_vals):
             The cumulative value of the field integral at each path
             segment
     """
-    accum = np.cumsum(np.diag(np.dot(field_vals[:-1], (p[1:] - p[:-1]).T)))
+    accum = np.cumsum(np.diag(np.dot(field_vals[:-1], (path[1:] - path[:-1]).T)))
     return accum
 
 
@@ -183,7 +184,7 @@ class Accumulators:
         self.paths      = paths
         self.ds         = ds
         self.ad         = ds.all_data()
-        self.accum      = {}
+        self.accum      = []
         self.left_edge  = self.ds.domain_left_edge
         self.right_edge = self.ds.domain_right_edge
 
@@ -193,7 +194,7 @@ class Accumulators:
 
         Parameters
         ----------
-        field : YTFieldData, iterable
+        field : list 
             Either the scalar field to add to the tree or an iterable
             containing the components of the vector field to add.
 
@@ -208,13 +209,8 @@ class Accumulators:
             An AMRKDTree for the dataset containing the given field values.
         """
         tree = AMRKDTree(self.ds)
-        if is_vector:
-            use_log = [False for i in range(len(field))]
-            vec_comps = [field + '_' + c for c in 'xyz']
-            field = [self.ad._determine_fields(f)[0] for f in vec_comps]
-        else:
-            use_log = [False]
-            field = [self.ad._determine_fields(field)[0]]
+        use_log = [False for i in range(len(field))]
+        field = [self.ad._determine_fields(f)[0] for f in field]
         tree.set_fields(field, use_log, False)
         return tree
 
@@ -254,7 +250,7 @@ class Accumulators:
             # Make sure point is within domain
             left_check = path[idx] < self.left_edge
             right_check = path[idx] >= self.right_edge
-            if not np.sum(np.logical_or(left_check, right_check)):
+            if np.sum(np.logical_or(left_check, right_check)):
                 msg = f"Point `{path[idx]}` at index `{idx}` outside domain bounds."
                 msg += f"LE: `{self.left_edge}`, RE: `{self.right_edge}`"
                 raise ValueError(msg)
@@ -268,13 +264,14 @@ class Accumulators:
             I = get_row_major_index(ncells, cell_ind)
             # Get the value of each component for the current cell
             vals[idx] = data[I] 
-            # Go to next point
+            # See if next point is still within the same node (if the next point
+            # is still in range of the array)
             idx += 1
-            # See if new point is still within the same node
-            left_check = path[idx] < node_left_edge
-            right_check = path[idx] >= node_right_edge
-            if not np.sum(np.logical_or(left_check, right_check)):
-                vals, idx = self._get_path_field_values(tree, path, idx, vals, npts)
+            if idx != npts:
+                left_check = path[idx] < node_left_edge
+                right_check = path[idx] >= node_right_edge
+                if np.sum(np.logical_or(left_check, right_check)):
+                    vals, idx = self._get_path_field_values(tree, path, idx, vals, npts)
         return vals, idx
                 
     def accumulate(self, field, is_vector=None):
@@ -299,11 +296,13 @@ class Accumulators:
         Raises
         ------
         ValueError
-            If is_vector is not set.
+            If is_vector is not set or if one of the givne pathes is
+            too short (less than two points).
         """
         if is_vector is None:
             raise ValueError("`is_vector` parameter not set.")
-        self.accum[field] = []
+        field = ensure_list(field)
+        self.accum = []
         # Build tree and add field to it
         tree = self._get_tree(field, is_vector)
         # Loop over each path the field is to be accumulated along
@@ -315,16 +314,18 @@ class Accumulators:
             values = np.zeros(p.shape)
             values, _ = self._get_path_field_values(tree, p, 0, values, npts)
             if is_vector:
-                self.accum[field].append(_accumulate_vector_field(p, values))
+                self.accum.append(_accumulate_vector_field(p, values))
             else:
-                self.accum[field].append(_accumulate_scalar_field(p, values))
+                self.accum.append(_accumulate_scalar_field(p, values))
 
-    def clear(self, field=None):
+    def clear(self):
         r"""
-        Clears out the accum attribute. If `field` is specified, then only
-        values corresponding to that field are cleared.
+        Clears out the accum attribute.
         """
-        if field:
-            del self.accum[field]
-        else:
-            self.accum = {}
+        self.accum = []
+
+    def add_path(self, path):
+        r"""
+        Allows the user to add a path to the accumulator after instantiation.
+        """
+        self.paths.append(path)
