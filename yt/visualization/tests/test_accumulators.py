@@ -1,8 +1,10 @@
 import numpy as np
 
+import yt
 from yt.frontends.stream.api import load_amr_grids
 from yt.testing import _amr_grid_index
 from yt.testing import _geom_transforms
+from yt.visualization.accumulators import Accumulators
 from yt.visualization.accumulators import get_row_major_index
 
 
@@ -36,7 +38,7 @@ def _generate_fake_data(dims):
     return v, s
 
 
-def _generate_fake_ds():
+def _generate_fake_ds(length_unit=None):
     """
     Creates a fake dataset to test the accumulator machinery. Based on
     fake_amr_dataset.
