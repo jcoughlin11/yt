@@ -1,7 +1,6 @@
 import numpy as np
 
 from yt.funcs import ensure_list
-from yt.units.yt_array import YTArray
 from yt.utilities.amr_kdtree.api import AMRKDTree
 
 
