@@ -1,5 +1,9 @@
 import numpy as np
 
+import unyt
+from unyt.array import ustack
+
+from yt import YTArray
 from yt.funcs import ensure_list
 from yt.utilities.amr_kdtree.api import AMRKDTree
 
@@ -180,12 +184,22 @@ class Accumulators:
     pass
     """
     def __init__(self, paths, ds):
-        self.paths      = paths
+        self.paths      = []
         self.ds         = ds
         self.ad         = ds.all_data()
         self.accum      = []
         self.left_edge  = self.ds.domain_left_edge
         self.right_edge = self.ds.domain_right_edge
+        # Make sure that the path has proper units. If no units are
+        # specified, assume code units
+        for p in paths:
+            if not isinstance(p, YTArray) or p.units == unyt.dimensionless:
+                self.paths.append(self.ds.arr(p, 'code_length'))
+            else:
+                self.paths.append(p.to(self.ds.length_unit))
+                    
+                
+                
 
     def _get_tree(self, field, is_vector):
         r"""
@@ -232,7 +246,6 @@ class Accumulators:
             The array containing the field values at each point along the
             path.
         """
-        # TODO: UNITS!!!
         node = tree.locate_node(path[idx])
         # Data is a list, with one element for each field component
         data = node.data.my_data
@@ -240,10 +253,10 @@ class Accumulators:
         ncells = data[0].shape
         # Put the data in a more convenient form: ncells x ndims array
         data = [d.flatten() for d in data]
-        data = np.stack(data, axis=1)
+        data = ustack(data, axis=1)
         # Cell width
-        node_left_edge = node.get_left_edge()
-        node_right_edge = node.get_right_edge()
+        node_left_edge = self.ds.arr(node.get_left_edge(), 'code_length')
+        node_right_edge = self.ds.arr(node.get_right_edge(), 'code_length')
         cell_size = (node_right_edge - node_left_edge) / ncells
         while idx < npts:
             # Make sure point is within domain
@@ -310,7 +323,7 @@ class Accumulators:
             npts = len(p)
             if npts < 2:
                 raise ValueError("Invalid path. Must have at least 2 points.")
-            values = np.zeros(p.shape)
+            values = YTArray(np.zeros(p.shape), self.ad[field[0]].units) 
             values, _ = self._get_path_field_values(tree, p, 0, values, npts)
             if is_vector:
                 self.accum.append(_accumulate_vector_field(p, values))
