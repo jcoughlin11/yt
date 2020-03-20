@@ -4,6 +4,7 @@ import yt
 from yt.frontends.stream.api import load_amr_grids
 from yt.testing import _amr_grid_index
 from yt.testing import _geom_transforms
+from yt.utilities.answer_testing.framework import data_dir_load, requires_ds
 from yt.visualization.accumulators import Accumulators
 from yt.visualization.accumulators import get_row_major_index
 
@@ -86,8 +87,9 @@ def test_custom_ds():
     """
     pass
 
+@requires_ds(g30, big_data=True)
 def test_two_pts_same_cell():
-    ds = yt.load(g30)
+    ds = data_dir_load(g30)
     path = np.array([[.16, .14, .55], [.155, .13, .56]])
     accumulator = Accumulators([path], ds)
     field = [('enzo', 'x-velocity'), ('enzo', 'y-velocity'), ('enzo', 'z-velocity')]
@@ -95,13 +97,12 @@ def test_two_pts_same_cell():
     answer = np.array([-0.00043153, -0.00093425, -0.00011986])
     np.testing.assert_array_almost_equal(accumulator.accum, answer)
 
+@requires_ds(g30, big_data=True)
 def test_two_pts_diff_nodes():
-    ds = yt.load(g30)
+    ds = data_dir_load(g30)
     path = np.array([[.16, .14, .55], [.3, .6, .75]])
     accumulator = Accumulators([path], ds)
     field = [('enzo', 'x-velocity'), ('enzo', 'y-velocity'), ('enzo', 'z-velocity')]
     accumulator.accumulate(field, is_vector=True)
     answer = np.array([0.0120828, 0.05505828, 0.05266109])
     np.testing.assert_array_almost_equal(accumulator.accum, answer)
-
-

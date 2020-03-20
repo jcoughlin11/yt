@@ -113,6 +113,10 @@ answer_tests:
   local_particle_trajectory_001:
     - yt/data_objects/tests/test_particle_trajectories.py
 
+  local_accumulators_001:
+    - yt/visualization/tests/test_accumulators.py:test_two_pts_same_cell
+    - yt/visualization/tests/test_accumulators.py:test_two_pts_diff_nodes
+
 other_tests:
   unittests:
      - '--exclude=test_mesh_slices'  # disable randomly failing test
