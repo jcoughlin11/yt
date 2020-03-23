@@ -34,7 +34,7 @@ def test_two_pts_same_cell_scalar():
     accumulator = Accumulators([path], ds)
     field = [('enzo', 'Density')]
     accumulator.accumulate(field, is_vector=False)
-    answer = WHAT 
+    answer = np.array([0.00270012])
     np.testing.assert_array_almost_equal(accumulator.accum, answer)
 
 @requires_ds(g30, big_data=True)
@@ -56,7 +56,7 @@ def test_two_pts_diff_nodes_scalar():
     accumulator = Accumulators([path], ds)
     field = [('enzo', 'Density')]
     accumulator.accumulate(field, is_vector=False)
-    answer = See note in the scalar field integration function
+    answer = np.array([0.09374269])
     np.testing.assert_array_almost_equal(accumulator.accum, answer)
 
 @requires_ds(g30, big_data=True)
@@ -82,7 +82,7 @@ def test_two_pts_same_cell_vector():
     accumulator = Accumulators([path], ds)
     field = [('enzo', 'x-velocity'), ('enzo', 'y-velocity'), ('enzo', 'z-velocity')]
     accumulator.accumulate(field, is_vector=True)
-    answer = np.array([-0.00043153, -0.00093425, -0.00011986])
+    answer = np.array([-0.00148564])
     np.testing.assert_array_almost_equal(accumulator.accum, answer)
 
 @requires_ds(g30, big_data=True)
@@ -104,7 +104,7 @@ def test_two_pts_diff_nodes_vector():
     accumulator = Accumulators([path], ds)
     field = [('enzo', 'x-velocity'), ('enzo', 'y-velocity'), ('enzo', 'z-velocity')]
     accumulator.accumulate(field, is_vector=True)
-    answer = np.array([0.0120828, 0.05505828, 0.05266109])
+    answer = np.array([0.05266109])
     np.testing.assert_array_almost_equal(accumulator.accum, answer)
 
 @requires_ds(g30, big_data=True)
