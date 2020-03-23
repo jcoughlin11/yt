@@ -74,6 +74,7 @@ def _accumulate_vector_field(path, field_vals):
             The cumulative value of the field integral at each path
             segment
     """
+    # https://en.wikipedia.org/wiki/Line_integral
     accum = np.cumsum(np.diag(np.dot(field_vals[:-1], (path[1:] - path[:-1]).T)))
     return accum
 
@@ -104,13 +105,14 @@ def _accumulate_scalar_field(p, field_vals):
         The cumulative value of the field integral at each path
         segment 
     """
-    accum = field_vals[:-1] * (p[1:] - p[:-1])
+    # https://en.wikipedia.org/wiki/Line_integral
+    accum = field_vals[:-1] * (np.linalg.norm(p[1:] - p[:-1], axis=1))
     # Since this integral results in a vector, I think the accumulation
     # should add the vectors together. The default for np.cumsum is
     # axis=None, which performs the cumulative summation along the
     # flattened array. Axis=0 adds the columns, which is akin to
     # performing a cumulative summation of each of the components
-    accum = np.cumsum(accum, axis=0)
+    accum = np.cumsum(accum)
     return accum
 
 
