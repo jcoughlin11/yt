@@ -106,13 +106,7 @@ def _accumulate_scalar_field(p, field_vals):
         segment 
     """
     # https://en.wikipedia.org/wiki/Line_integral
-    accum = field_vals[:-1] * (np.linalg.norm(p[1:] - p[:-1], axis=1))
-    # Since this integral results in a vector, I think the accumulation
-    # should add the vectors together. The default for np.cumsum is
-    # axis=None, which performs the cumulative summation along the
-    # flattened array. Axis=0 adds the columns, which is akin to
-    # performing a cumulative summation of each of the components
-    accum = np.cumsum(accum)
+    accum = np.cumsum(field_vals[:-1] * np.linalg.norm(p[1:] - p[:-1], axis=1))
     return accum
 
 
