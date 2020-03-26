@@ -75,7 +75,11 @@ def _accumulate_vector_field(path, field_vals):
             segment
     """
     # https://en.wikipedia.org/wiki/Line_integral
-    accum = np.cumsum(np.diag(np.dot(field_vals[:-1], (path[1:] - path[:-1]).T)))
+    # np.dot doesn't combine units correctly and there does not appear to be a
+    # unyt implementation of dot, so units will be handled manually
+    # for the time being
+    accum = np.cumsum(np.diag(np.dot(field_vals[:-1].d, (path[1:].d - path[:-1].d).T)))
+    accum = YTArray(accum, field_vals.units * path.units)
     return accum
 
 
@@ -106,7 +110,12 @@ def _accumulate_scalar_field(p, field_vals):
         segment 
     """
     # https://en.wikipedia.org/wiki/Line_integral
-    accum = np.cumsum(field_vals[:-1] * np.linalg.norm(p[1:] - p[:-1], axis=1))
+    # np.linalg.norm returns a ndarray, so when multiplied by field_vals, which
+    # is a YTArray, this leads to incorrect units. There does not appear to be
+    # a unyt implementation of norm, as far as I'm aware, so units will be
+    # handled manually for the time being
+    accum = np.cumsum(field_vals[:-1].d * np.linalg.norm(p[1:].d - p[:-1].d, axis=1))
+    accum = YTArray(accum, field_vals.units * p.units)
     return accum
 
 
@@ -307,6 +316,7 @@ class Accumulators:
             If is_vector is not set or if one of the givne pathes is
             too short (less than two points).
         """
+        import pdb; pdb.set_trace()
         if is_vector is None:
             raise ValueError("`is_vector` parameter not set.")
         field = ensure_list(field)
