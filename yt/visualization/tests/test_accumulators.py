@@ -1,11 +1,7 @@
 import numpy as np
 
-from yt.frontends.stream.api import load_amr_grids
-from yt.testing import _amr_grid_index
-from yt.testing import _geom_transforms
 from yt.utilities.answer_testing.framework import data_dir_load, requires_ds
 from yt.visualization.accumulators import Accumulators
-from yt.visualization.accumulators import get_row_major_index
 
 
 g30 = "IsolatedGalaxy/galaxy0030/galaxy0030"
@@ -77,7 +73,7 @@ def test_npts_scalar():
     The current answer is for N = 10
     """
     ds = data_dir_load(g30)
-    path = _generate_path()
+    path = _generate_fake_path()
     accumulator = Accumulators([path], ds)
     field = [('enzo', 'Density')]
     accumulator.accumulate(field, is_vector=False)
@@ -146,7 +142,7 @@ def test_npts_vector():
     The current answer is for N = 10
     """
     ds = data_dir_load(g30)
-    path = _generate_path()
+    path = _generate_fake_path()
     field = [('enzo', 'x-velocity'), ('enzo', 'y-velocity'), ('enzo', 'z-velocity')]
     accumulator = Accumulators([path], ds)
     accumulator.accumulate(field, is_vector=True)

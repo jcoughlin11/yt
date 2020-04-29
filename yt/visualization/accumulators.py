@@ -316,7 +316,6 @@ class Accumulators:
             If is_vector is not set or if one of the givne pathes is
             too short (less than two points).
         """
-        import pdb; pdb.set_trace()
         if is_vector is None:
             raise ValueError("`is_vector` parameter not set.")
         field = ensure_list(field)
