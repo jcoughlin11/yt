@@ -98,7 +98,7 @@ def _accumulate_scalar_field(p, field_vals):
     p : YTArray 
         The path to be integrated along
 
-    fieldVals : YTArray 
+    field_vals : YTArray 
         An array containing the values of the scalar field to be
         integrated at the location of the starting point of each
         path segment as well as the endpoint for the last segment
@@ -119,51 +119,6 @@ def _accumulate_scalar_field(p, field_vals):
     return accum
 
 
-def get_row_major_index(ncells, cell_ind):
-    """
-    Converts the cell indices (i_1, i_2, ..., i_N) to the corresponding
-    row-major index I.
-
-    The field data for each cell in the node are stored in an N dimensional
-    array with shape (n_1, n_2, ..., n_N), where n_i is the number of cells along
-    dimension i. The N dimensional index of the current cell under consideration,
-    `cell_ind` is (i_1, i_2, ..., i_N). However, accessing the value of a single
-    element in a multi-dimensional array (unflattened data) with another array
-    (cell_ind) is problematic.
-
-    As such, we flatten the data, which puts the data into row-major format.
-    The current cell under consideration can then be accessed by converting
-    cell_ind to the corresponding row-major index I.
-
-    The location I in the row-major array of the cell given by (1_1, i_2, ..., i_N)
-    is:
-
-        I = i_N + n_N * (i_{N-1} + n_{N-1} * (...(i_2 + n_2 * i)...)
-
-    which in three dimensions is:
-
-        I = k + n_z * (j + n_y * i)
-
-    Parameters
-    ----------
-    ncells : tuple
-        Contains the number of cells along each dimension.
-
-    cell_ind : tuple
-        Contains the integer values of the index of the current cell in each
-        dimension (i.e., this is (i_1, i_2, ..., i_N)).
-
-    Returns
-    -------
-    I : int
-        The row-major index corresponding to cell_ind.
-    """
-    I = cell_ind[0]
-    for idx in range(1, len(ncells)):
-        I = cell_ind[idx] + ncells[idx] * I
-    return I
-
-
 class Accumulators:
     r"""
     Container for creating and storing the path integrals of various
@@ -175,18 +130,6 @@ class Accumulators:
     stored in a cumulative fashion, which means that, once computed, the
     accumulated value of the field is stored at each point along the
     path, allowing the user to query this information.
-
-    Attributes
-    ----------
-    pass
-
-    Methods
-    -------
-    pass
-
-    Examples
-    --------
-    pass
     """
     def __init__(self, paths, ds):
         self.paths      = []
@@ -198,13 +141,10 @@ class Accumulators:
         # Make sure that the path has proper units. If no units are
         # specified, assume code units
         for p in paths:
-            if not isinstance(p, YTArray) or p.units == unyt.dimensionless:
+            if not isinstance(p, YTArray) or p.units.is_dimensionless: 
                 self.paths.append(self.ds.arr(p, 'code_length'))
             else:
                 self.paths.append(p.to(self.ds.length_unit))
-                    
-                
-                
 
     def _get_tree(self, field, is_vector):
         r"""
@@ -254,31 +194,31 @@ class Accumulators:
         node = tree.locate_node(path[idx])
         # Data is a list, with one element for each field component
         data = node.data.my_data
-        # Number of cells in the node
-        ncells = data[0].shape
-        # Put the data in a more convenient form: ncells x ndims array
+        # Number of cells in the node along each dimension
+        ncells_per_dim = data[0].shape
+        # Put the data in a more convenient form: ncells_tot x ndims array
         data = [d.flatten() for d in data]
         data = ustack(data, axis=1)
         # Cell width
         node_left_edge = self.ds.arr(node.get_left_edge(), 'code_length')
         node_right_edge = self.ds.arr(node.get_right_edge(), 'code_length')
-        cell_size = (node_right_edge - node_left_edge) / ncells
+        cell_size = (node_right_edge - node_left_edge) / ncells_per_dim
         while idx < npts:
             # Make sure point is within domain
             left_check = path[idx] < self.left_edge
             right_check = path[idx] >= self.right_edge
-            if np.sum(np.logical_or(left_check, right_check)):
+            if np.any(left_check | right_check):
                 msg = f"Point `{path[idx]}` at index `{idx}` outside domain bounds."
                 msg += f"LE: `{self.left_edge}`, RE: `{self.right_edge}`"
                 raise ValueError(msg)
             # Figure out which cell in the node the point falls within
-            # Origin of node can be offset from origin of origin of volume,
+            # Origin of node can be offset from origin of volume,
             # so we have to subtract it off to get the right cell indices
-            cell_ind = ((path[idx] - node_left_edge) / cell_size).astype(int)
+            cell_ind = ((path[idx] - node_left_edge) / cell_size).astype('i8')
             # Access the value of the field at that index. Accessing a single
             # element of a multi-dimensional array using another array is
             # problematic. Flatten and use a row-major index, indstead  
-            I = get_row_major_index(ncells, cell_ind)
+            I = np.ravel_multi_index(cell_ind, ncells_per_dim) 
             # Get the value of each component for the current cell
             vals[idx] = data[I] 
             # See if next point is still within the same node (if the next point
@@ -287,7 +227,7 @@ class Accumulators:
             if idx != npts:
                 left_check = path[idx] < node_left_edge
                 right_check = path[idx] >= node_right_edge
-                if np.sum(np.logical_or(left_check, right_check)):
+                if np.any(left_check | right_check):
                     vals, idx = self._get_path_field_values(tree, path, idx, vals, npts)
         return vals, idx
                 
