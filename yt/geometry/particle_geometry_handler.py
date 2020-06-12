@@ -92,7 +92,7 @@ class ParticleIndex(Index):
             ds.domain_left_edge = ds.arr(1.05*min_ppos, 'code_length')
             ds.domain_right_edge = ds.arr(1.05*max_ppos, 'code_length')
             ds.domain_width = ds.domain_right_edge - ds.domain_left_edge
-            
+
         # use a trivial morton index for datasets containing a single chunk
         if len(self.data_files) == 1:
             order1 = 1
@@ -105,6 +105,11 @@ class ParticleIndex(Index):
             dont_cache = True
         else:
             dont_cache = False
+
+        # If we have applied a bounding box then we can't cache the
+        # ParticleBitmap because it is doman dependent
+        if getattr(ds, "_domain_override", False):
+            dont_cache = True
 
         if not hasattr(self.ds, '_file_hash'):
             self.ds._file_hash = self._generate_hash()
@@ -167,21 +172,30 @@ class ParticleIndex(Index):
         sub_mi1 = np.zeros(max_npart, "uint64")
         sub_mi2 = np.zeros(max_npart, "uint64")
         pb = get_pbar("Initializing refined index", len(self.data_files))
+        mask_threshold = getattr(self, '_index_mask_threshold', 2)
+        count_threshold = getattr(self, '_index_count_threshold', 256)
+        mylog.debug("Using estimated thresholds of %s and %s for refinement", mask_threshold, count_threshold)
+        total_refined = 0
+        total_coarse_refined = ((mask >= 2) & (self.regions.particle_counts > count_threshold)).sum()
+        mylog.debug("This should produce roughly %s zones, for %s of the domain",
+                    total_coarse_refined, 100 * total_coarse_refined / mask.size)
         for i, data_file in enumerate(self.data_files):
+            coll = None
             pb.update(i)
             nsub_mi = 0
             for ptype, pos in self.io._yield_coordinates(data_file):
+                if pos.size == 0: continue
                 if hasattr(self.ds, '_sph_ptypes') and ptype == self.ds._sph_ptypes[0]:
                     hsml = self.io._get_smoothing_length(
                         data_file, pos.dtype, pos.shape)
                 else:
                     hsml = None
-                nsub_mi = self.regions._refined_index_data_file(
-                    pos, hsml, mask, sub_mi1, sub_mi2,
-                    data_file.file_id, nsub_mi)
-            self.regions._set_refined_index_data_file(
-                sub_mi1, sub_mi2,
-                data_file.file_id, nsub_mi)
+                nsub_mi, coll = self.regions._refined_index_data_file(
+                    coll, pos, hsml, mask, sub_mi1, sub_mi2,
+                    data_file.file_id, nsub_mi, count_threshold = count_threshold,
+                    mask_threshold = mask_threshold)
+                total_refined += nsub_mi
+            self.regions.bitmasks.append(data_file.file_id, coll)
         pb.finish()
         self.regions.find_collisions_refined()
 
