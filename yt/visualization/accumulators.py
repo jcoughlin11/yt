@@ -1,6 +1,5 @@
 import numpy as np
 
-import unyt
 from unyt.array import ustack
 
 from yt import YTArray
