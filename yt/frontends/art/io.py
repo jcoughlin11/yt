@@ -581,7 +581,7 @@ def find_root(f, a, b, tol=1e-6):
     return c
 
 
-def quad(fintegrand, xmin, xmax, n=1e4):
+def quad(fintegrand, xmin, xmax, n=10000):
     spacings = np.logspace(np.log10(xmin), np.log10(xmax), n)
     integrand_arr = fintegrand(spacings)
     val = np.trapz(integrand_arr, dx=np.diff(spacings))
