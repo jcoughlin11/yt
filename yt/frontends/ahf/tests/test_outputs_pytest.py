@@ -24,9 +24,6 @@ ahf_halos = 'ahf_halos/snap_N64L16_135.parameter'
 @pytest.mark.answer_test
 @pytest.mark.usefixtures('answer_file')
 class TestAHF:
-    #-----
-    # test_AHFHalosDataset
-    #-----
     @requires_file(ahf_halos)
     def test_AHFHalosDataset(self, ds_ahf_halos):
         assert isinstance(ds_ahf_halos, AHFHalosDataset)
@@ -35,9 +32,6 @@ class TestAHF:
         psc = ParticleSelectionComparison(ds_ahf_halos)
         psc.run_defaults()
 
-    #-----
-    # test_fields_ahf_halos
-    #-----
     @pytest.mark.usefixtures('hashing')
     @utils.requires_ds(ahf_halos)
     def test_fields_ahf_halos(self, field, ds_ahf_halos):
