@@ -10,7 +10,7 @@ Notes:
 import pytest
 
 from yt.frontends.ahf.api import AHFHalosDataset
-from yt.testing import requires_file
+from yt.testing import ParticleSelectionComparison, requires_file
 from yt.utilities.answer_testing.answer_tests import field_values
 from yt.utilities.answer_testing import utils
 
@@ -30,6 +30,10 @@ class TestAHF:
     @requires_file(ahf_halos)
     def test_AHFHalosDataset(self, ds_ahf_halos):
         assert isinstance(ds_ahf_halos, AHFHalosDataset)
+        ad = ds_ahf_halos.all_data()
+        ad['particle_mass']
+        psc = ParticleSelectionComparison(ds_ahf_halos)
+        psc.run_defaults()
 
     #-----
     # test_fields_ahf_halos
