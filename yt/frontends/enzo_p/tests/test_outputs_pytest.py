@@ -35,9 +35,6 @@ _pfields = ("particle_position_x", "particle_position_y",
             "particle_velocity_y", "particle_velocity_z")
 
 
-#============================================
-#                TestEnzoP
-#============================================
 @pytest.mark.answer_test
 @pytest.mark.usefixtures('answer_file')
 class TestEnzoP:

@@ -47,47 +47,29 @@ _castro_fields = ("Temp", "density", "particle_count")
 _raw_fields = [('raw', 'Bx'), ('raw', 'Ey'), ('raw', 'jz')]
 
 
-#============================================
-#                TestBoxLib
-#============================================
 @pytest.mark.answer_test
 @pytest.mark.usefixtures('answer_file')
 class TestBoxLib:
-    #-----
-    # test_radavect
-    #-----
     @pytest.mark.usefixtures('hashing')
     @pytest.mark.parametrize('ds', [radadvect], indirect=True)
     def test_radadvect(self, f, a, d, w, ds):
         self.hashes.update(small_patch_amr(ds, f, w, a, d))
 
-    #-----
-    # test_radtube
-    #-----
     @pytest.mark.usefixtures('hashing')
     @pytest.mark.parametrize('ds', [rt], indirect=True)
     def test_radtube(self, f, a, d, w, ds):
         self.hashes.update(small_patch_amr(ds, f, w, a, d))
 
-    #-----
-    # test_star
-    #-----
     @pytest.mark.usefixtures('hashing')
     @pytest.mark.parametrize('ds', [star], indirect=True)
     def test_star(self, f, a, d, w, ds):
         self.hashes.update(small_patch_amr(ds, f, w, a, d))
 
-    #-----
-    # test_LyA
-    #-----
     @pytest.mark.usefixtures('hashing')
     @pytest.mark.parametrize('ds', [LyA], indirect=True)
     def test_LyA(self, f, a, d, w, ds):
         self.hashes.update(small_patch_amr(ds, f, w, a, d))
 
-    #-----
-    # test_nyx_particle_io
-    #-----
     @requires_file(LyA)
     def test_nyx_particle_io(self):
         ds = utils.data_dir_load(LyA)
@@ -113,17 +95,11 @@ class TestBoxLib:
         assert(np.all(np.logical_and(reg['particle_position_z'] <= right_edge[2], 
                                      reg['particle_position_z'] >= left_edge[2])))
 
-    #-----
-    # test_RT_particles
-    #-----
     @pytest.mark.usefixtures('hashing')
     @pytest.mark.parametrize('ds', [RT_particles], indirect=True)
     def test_RT_particles(self, f, a, d, w, ds):
         self.hashes.update(small_patch_amr(ds, f, w, a, d))
 
-    #-----
-    # test_castro_particle_io
-    #-----
     @requires_file(RT_particles)
     def test_castro_particle_io(self):
         ds = utils.data_dir_load(RT_particles)
@@ -146,33 +122,21 @@ class TestBoxLib:
         assert(np.all(np.logical_and(reg['particle_position_y'] <= right_edge[1], 
                                      reg['particle_position_y'] >= left_edge[1])))
 
-    #-----
-    # test_langmuir
-    #-----
     @pytest.mark.usefixtures('hashing')
     @pytest.mark.parametrize('ds', [langmuir], indirect=True)
     def test_langmuir(self, f, a, d, w, ds):
         self.hashes.update(small_patch_amr(ds, f, w, a, d))
 
-    #-----
-    # test_plasma
-    #-----
     @pytest.mark.usefixtures('hashing')
     @pytest.mark.parametrize('ds', [plasma], indirect=True)
     def test_plasma(self, f, a, d, w, ds):
         self.hashes.update(small_patch_amr(ds, f, w, a, d))
 
-    #-----
-    # test_beam
-    #-----
     @pytest.mark.usefixtures('hashing')
     @pytest.mark.parametrize('ds', [beam], indirect=True)
     def test_beam(self, f, a, d, w, ds):
         self.hashes.update(small_patch_amr(ds, f, w, a, d))
 
-    #-----
-    # test_warpx_particle_io
-    #-----
     @requires_file(plasma)
     def test_warpx_particle_io(self):
         ds = utils.data_dir_load(plasma)
@@ -203,53 +167,32 @@ class TestBoxLib:
         assert(np.all(np.logical_and(reg['particle_position_z'] <= right_edge[2], 
                                      reg['particle_position_z'] >= left_edge[2])))
 
-    #-----
-    # test_raw_fields
-    #-----
     @pytest.mark.usefixtures('hashing')
     @pytest.mark.parametrize('ds', [raw_fields], indirect=True)
     def test_raw_fields(self, f, ds):
         gv = grid_values(ds, f)
         self.hashes.update({'grid_values' : gv})
 
-    #-----
-    # test_OrionDataset
-    #-----
     @requires_file(rt)
     def test_OrionDataset(self):
         assert isinstance(utils.data_dir_load(rt), OrionDataset)
 
-    #-----
-    # teset_NyxDataset
-    #-----
     @requires_file(LyA)
     def test_NyxDataset(self):
         assert isinstance(utils.data_dir_load(LyA), NyxDataset)
 
-    #-----
-    # test_CastroDataset
-    #-----
     @requires_file(RT_particles)
     def test_CastroDataset(self):
         assert isinstance(utils.data_dir_load(RT_particles), CastroDataset)
 
-    #-----
-    # test_WarpXDataset
-    #-----
     @requires_file(plasma)
     def test_WarpXDataset(self):
         assert isinstance(utils.data_dir_load(plasma), WarpXDataset)
 
-    #-----
-    # test_units_override
-    #-----
     @requires_file(rt)
     def test_units_override(self):
         units_override_check(rt)
 
-    #-----
-    # test_nyx_no_part
-    #-----
     @requires_file(nyx_no_particles)
     def test_nyx_no_part(self):
         ds = utils.data_dir_load(nyx_no_particles)
@@ -269,9 +212,6 @@ class TestBoxLib:
              ('boxlib', 'zmom')])
         assert_equal(sorted(ds.field_list), fields)
 
-    #-----
-    # test_maestro_parameters
-    #-----
     @requires_file(msubch)
     def test_maestro_parameters(self):
         ds = utils.data_dir_load(msubch)

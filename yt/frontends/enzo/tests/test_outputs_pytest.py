@@ -91,6 +91,7 @@ class TestEnzo:
     @pytest.mark.parametrize('ds', [g30], indirect=True)
     def test_galaxy0030(self, a, d, w, f, ds):
         color_conservation_test(ds)
+        assert_equal(ds.particle_type_counts, {'io': 1124453})
         self.hashes.update(big_patch_amr(ds, f, w, a, d))
 
     @pytest.mark.usefixtures('hashing')
@@ -118,17 +119,11 @@ class TestEnzo:
     @pytest.mark.parametrize('ds', [ecp], indirect=True)
     def test_nuclei_density_fields(self, ds):
         ad = ds.all_data()
-        # Hydrogen
-        hd1 = utils.generate_hash(ad["H_nuclei_density"].tostring())
-        hd2 = utils.generate_hash((ad["H_number_density"] +
-            ad["H_p1_number_density"]).tostring())
-        assert hd1 == hd2
-        hd1 = utils.generate_hash(ad["He_nuclei_density"].tostring())
-        hd2 = utils.generate_hash((ad["He_number_density"] +
-            ad["He_p1_number_density"] +
-            ad["He_p2_number_density"]).tostring()
-        )
-        assert hd1 == hd2
+        assert_array_equal(ad["H_nuclei_density"],
+                           (ad["H_p0_number_density"] + ad["H_p1_number_density"]))
+        assert_array_equal(ad["He_nuclei_density"],
+            (ad["He_p0_number_density"] +
+             ad["He_p1_number_density"] + ad["He_p2_number_density"]))
 
     @pytest.mark.parametrize('ds', [enzotiny], indirect=True)
     def test_EnzoDataset(self, ds):

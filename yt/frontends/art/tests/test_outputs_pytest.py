@@ -26,9 +26,6 @@ from yt.utilities.answer_testing import utils
 d9p = "D9p_500/10MpcBox_HartGal_csf_a0.500.d"
 
 
-#============================================
-#                   TestArt
-#============================================
 @pytest.mark.answer_test
 @pytest.mark.usefixtures('answer_file')
 class TestArt:

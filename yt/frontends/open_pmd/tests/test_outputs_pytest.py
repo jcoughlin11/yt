@@ -26,15 +26,9 @@ noParticles = "no_particles/data00000400.h5"
 groupBased = "singleParticle/simData.h5"
 
 
-#============================================
-#                TestOpenPMD
-#============================================
 @pytest.mark.answer_test
 @pytest.mark.usefixtures('answer_file')
 class TestOpenPMD:
-    #-----
-    # test_3d_out
-    #-----
     @pytest.mark.parametrize('ds', [threeD], indirect=True)
     def test_3d_out(self, ds):
         field_list = [('all', 'particle_charge'),
@@ -79,9 +73,6 @@ class TestOpenPMD:
         assert_almost_equal(ds.domain_right_edge - \
             ds.domain_left_edge, domain_width)
 
-    #-----
-    # test_2d_out
-    #-----
     @pytest.mark.parametrize('ds', [twoD], indirect=True)
     def test_2d_out(self, ds):
         field_list = [('Hydrogen1+', 'particle_charge'),
@@ -144,9 +135,6 @@ class TestOpenPMD:
         assert_almost_equal(ds.domain_right_edge - \
             ds.domain_left_edge, domain_width)
 
-    #-----
-    # test_no_fields_out
-    #-----
     @pytest.mark.parametrize('ds', [noFields], indirect=True)
     def test_no_fields_out(self, ds):
         field_list = [('all', 'particle_charge'),
@@ -188,9 +176,6 @@ class TestOpenPMD:
         assert_almost_equal(ds.domain_right_edge - \
             ds.domain_left_edge, domain_width)
 
-    #-----
-    # test_no_particles_out
-    #-----
     @pytest.mark.parametrize('ds', [noParticles], indirect=True)
     def test_no_particles_out(self, ds):
         field_list = [('openPMD', 'E_x'),
@@ -211,9 +196,6 @@ class TestOpenPMD:
         assert_almost_equal(ds.domain_right_edge - \
             ds.domain_left_edge, domain_width)
 
-    #-----
-    # test_groupBased_out
-    #-----
     @requires_file(groupBased)
     def test_groupBased_out(self):
         dss = load(groupBased)

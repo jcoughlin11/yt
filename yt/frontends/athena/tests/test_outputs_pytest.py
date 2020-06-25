@@ -42,31 +42,19 @@ uo_sloshing = {"length_unit": (1.0,"Mpc"),
                "mass_unit": (1.0e14,"Msun")}
 
 
-#============================================
-#                 TestAthena
-#============================================
 @pytest.mark.answer_test
 @pytest.mark.usefixtures('answer_file')
 class TestAthena:
-    #-----
-    # test_cloud
-    #-----
     @pytest.mark.usefixtures('hashing')
     @pytest.mark.parametrize('ds', [cloud], indirect=True)
     def test_cloud(self, f, a, d, w, ds):
         self.hashes.update(small_patch_amr(ds, f, w, a, d))
 
-    #-----
-    # test_blast
-    #-----
     @pytest.mark.usefixtures('hashing')
     @pytest.mark.parametrize('ds', [blast], indirect=True)
     def test_blast(self, f, a, d, w, ds):
         self.hashes.update(small_patch_amr(ds, f, w, a, d))
 
-    #-----
-    # test_blast_override
-    #-----
     @requires_file(blast)
     def test_blast_override(self):
         # verify that overriding units causes derived unit values to be updated.
@@ -74,18 +62,12 @@ class TestAthena:
         ds = load(blast, units_override=uo_blast)
         assert_equal(float(ds.magnetic_unit.in_units('gauss')), 5.478674679698131e-07)
 
-    #-----
-    # test_stripping
-    #-----
     @pytest.mark.big_data
     @pytest.mark.usefixtures('hashing')
     @utils.requires_ds(stripping)
     def test_stripping(self, f, a, d, w, ds_stripping):
         self.hashes.update(small_patch_amr(ds_stripping, f, w, a, d))
 
-    #-----
-    # test_nprocs
-    #-----
     @requires_file(sloshing)
     @disable_dataset_cache
     def test_nprocs(self):
@@ -110,9 +92,6 @@ class TestAthena:
                               sp2.quantities.bulk_velocity())
         assert_equal(prj1["density"], prj2["density"])
 
-    #-----
-    # test_AthenaDataset
-    #-----
     @pytest.mark.parametrize('ds', [cloud], indirect=True)
     def test_AthenaDataset(self, ds):
         assert isinstance(ds, AthenaDataset)

@@ -26,15 +26,9 @@ disk = "KeplerianDisk/disk.out1.00000.athdf"
 AM06 = "AM06/AM06.out1.00400.athdf"
 
 
-#============================================
-#                TestAthenaPP
-#============================================
 @pytest.mark.answer_test
 @pytest.mark.usefixtures('answer_file')
 class TestAthenaPP:
-    #-----
-    # test_disk
-    #-----
     @pytest.mark.usefixtures('hashing')
     @pytest.mark.parametrize('ds', [disk], indirect=True)
     def test_disk(self, field, ds):
@@ -48,17 +42,11 @@ class TestAthenaPP:
         ga = generic_array(field_func, args=[field])
         self.hashes.update({'generic_array' : ga})
 
-    #-----
-    # test_AM06
-    #-----
     @pytest.mark.usefixtures('hashing')
     @pytest.mark.parametrize('ds', [AM06], indirect=True)
     def test_AM06(self, a, d, w, f, ds):
         self.hashes.update(small_patch_amr(ds, f, w, a, d))
 
-    #-----
-    # test_AM06_override
-    #-----
     @requires_file(AM06)
     def test_AM06_override(self):
         r"""Verify that overriding units causes derived unit values to be
@@ -72,16 +60,10 @@ class TestAthenaPP:
         ds = load(AM06, units_override=uo_AM06)
         assert float(ds.magnetic_unit.in_units('gauss')) == 9.01735778342523e-08
 
-    #-----
-    # test_units_override
-    #-----
     @requires_file(AM06)
     def test_units_override(self):
         units_override_check(AM06)
 
-    #-----
-    # test_AthenaPPDataset
-    #-----
     @requires_file(AM06)
     def test_AthenaPPDataset(self):
         assert isinstance(utils.data_dir_load(AM06), AthenaPPDataset)

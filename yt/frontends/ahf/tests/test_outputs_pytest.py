@@ -18,9 +18,6 @@ from yt.utilities.answer_testing import utils
 ahf_halos = 'ahf_halos/snap_N64L16_135.parameter'
 
 
-#============================================
-#                   TestAHF
-#============================================
 @pytest.mark.answer_test
 @pytest.mark.usefixtures('answer_file')
 class TestAHF:
