@@ -13,7 +13,8 @@ from yt.testing import \
     assert_almost_equal, \
     assert_equal, \
     requires_file, \
-    units_override_check
+    units_override_check, \
+    ParticleSelectionComparison
 from yt.units.yt_array import \
     YTQuantity
 from yt.utilities.answer_testing.answer_tests import field_values, \
@@ -31,9 +32,6 @@ d9p = "D9p_500/10MpcBox_HartGal_csf_a0.500.d"
 @pytest.mark.answer_test
 @pytest.mark.usefixtures('answer_file')
 class TestArt:
-    #-----
-    # test_d9p
-    #-----
     @pytest.mark.big_data
     @pytest.mark.usefixtures('hashing')
     @pytest.mark.parametrize('ds', [d9p], indirect=True)
@@ -49,9 +47,6 @@ class TestArt:
             ppv = pixelized_projection_values(ds, a, f, w, d)
             self.hashes.update({'pixelized_projection_values' : ppv})
 
-    #-----
-    # test_AnaDM
-    #-----
     @pytest.mark.big_data
     @pytest.mark.parametrize('ds', [d9p], indirect=True)
     def test_d9p_no_params(self, ds):
@@ -103,16 +98,15 @@ class TestArt:
         AnaTotTemp = YTQuantity(150219844793.39072, 'K')  # just leaves
         assert_equal(ad[('gas', 'temperature')].sum(), AnaTotTemp)
 
-    #-----
-    # test_ARTDataset
-    #-----
     @pytest.mark.parametrize('ds', [d9p], indirect=True)
     def test_ARTDataset(self, ds):
         assert isinstance(ds, ARTDataset)
 
-    #-----
-    # test_units_override
-    #-----
     @requires_file(d9p)
     def test_units_override(self):
         units_override_check(d9p)
+
+    @pytest.mark.parametrize('ds', [d9p], indirect=True)
+    def test_particle_selection(self, ds):
+        psc = ParticleSelectionComparison(ds)
+        psc.run_defaults()
