@@ -19,9 +19,8 @@ from yt.testing import \
     requires_file, \
     units_override_check
 from yt.visualization.plot_window import SlicePlot
-from yt.utilities.answer_testing.answer_tests import analytic_halo_mass_function, \
+from yt.utilities.answer_testing.answer_tests import \
     big_patch_amr, \
-    simulated_halo_mass_function, \
     small_patch_amr
 from yt.utilities.answer_testing import utils
 
