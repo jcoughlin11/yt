@@ -98,22 +98,6 @@ def pixelized_projection_values(ds, axis, field,
         d["%s_sum" % (f,)] = proj.field_data[f].sum(dtype="float64")
     return d
 
-def simulated_halo_mass_function(ds, finder):
-    hc = HaloCatalog(data_ds=ds, finder_method=finder)
-    hc.create()
-    hmf = HaloMassFcn(halos_ds=hc.halos_ds)
-    result = np.empty((2, hmf.masses_sim.size))
-    result[0] = hmf.masses_sim.d
-    result[1] = hmf.n_cumulative_sim.d
-    return result
-
-def analytic_halo_mass_function(ds, fit):
-    hmf = HaloMassFcn(simulation_ds=ds, fitting_function=fit)
-    result = np.empty((2, hmf.masses_analytic.size))
-    result[0] = hmf.masses_analytic.d
-    result[1] = hmf.n_cumulative_analytic.d
-    return result
-
 def small_patch_amr(ds, field, weight, axis, ds_obj):
     results = {}
     # Grid hierarchy test

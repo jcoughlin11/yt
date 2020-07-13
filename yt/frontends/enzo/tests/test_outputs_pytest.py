@@ -94,18 +94,6 @@ class TestEnzo:
         assert_equal(ds.particle_type_counts, {'io': 1124453})
         self.hashes.update(big_patch_amr(ds, f, w, a, d))
 
-    @pytest.mark.usefixtures('hashing')
-    @pytest.mark.parametrize('ds', [enzotiny], indirect=True)
-    def test_simulated_halo_mass_function(self, finder, ds):
-        shmf = simulated_halo_mass_function(ds, finder)
-        self.hashes.update({'simulated_halo_mass_function' : shmf})
-
-    @pytest.mark.usefixtures('hashing')
-    @pytest.mark.parametrize('ds', [enzotiny], indirect=True)
-    def test_analytic_halo_mass_function(self, fit, ds):
-        ahmf = analytic_halo_mass_function(ds, fit)
-        self.hashes.update({'analytic_halo_mass_function' : ahmf})
-
     @pytest.mark.big_data
     @pytest.mark.parametrize('ds', [ecp], indirect=True)
     def test_ecp(self, ds):
