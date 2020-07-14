@@ -17,7 +17,7 @@ from yt.testing import \
     ParticleSelectionComparison, \
     requires_file, \
     units_override_check
-from yt.utilities.answer_testing.answer_tests import small_patch_amr, sph_answer
+from yt.utilities.answer_testing.answer_tests import nbody_answer, small_patch_amr 
 
 # Test data
 sloshing = "GasSloshingLowRes/sloshing_low_res_hdf5_plt_cnt_0300"
@@ -66,7 +66,7 @@ class TestFlash:
     @pytest.mark.usefixtures('hashing')
     @pytest.mark.parametrize('ds', [fid_1to3_b1], indirect=True)
     def test_fid_1to3_b1(self, f, w, d, a, ds):
-        self.hashes.update(sph_answer(ds,
+        self.hashes.update(nbody_answer(ds,
             'fiducial_1to3_b1_hdf5_part_0080', 6684119, f, w, d, a
             )
         )

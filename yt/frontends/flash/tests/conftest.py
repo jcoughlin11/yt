@@ -22,13 +22,12 @@ test_params = {
         'f' : [('temperature', 'density'), ('temperature', 'density')]
     },
     'test_fid_1to3_b1' : {
-        'f, w' : [((("deposit", "all_density") , None),
-                    (("deposit", "all_count") , None),
-                    (("deposit", "all_cic") , None),
-                    (("deposit", "all_cic_velocity_x") , ("deposit", "all_cic")),
-                    (("deposit", "all_cic_velocity_y") , ("deposit", "all_cic")),
-                    (("deposit", "all_cic_velocity_z") , ("deposit", "all_cic"))),
-                    ('all_dens', 'all_count', 'all_cic', 'all_cic_vx', 'all_cic_vy', 'all_cic_vz')],
+        'f, w' : [((("all", "particle_mass") , None),
+                    (("all", "particle_ones") , None),
+                    (("all", "particle_velocity_x") , ("all", "particle_mass")),
+                    (("all", "particle_velocity_y") , ("all", "particle_mass")),
+                    (("all", "particle_velocity_z") , ("all", "particle_mass"))),
+                    ('all_mass', 'all_ones', 'all_vx', 'all_vy', 'all_vz')],
         'd' : [(None, ('sphere', ('c', (0.1, 'unitary')))), ('None' ,'sphere')],
         'a' : [(0, 1, 2), ('0', '1', '2')]
     }
