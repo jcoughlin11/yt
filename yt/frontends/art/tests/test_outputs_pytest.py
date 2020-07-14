@@ -34,11 +34,7 @@ class TestArt:
     @pytest.mark.parametrize('ds', [d9p], indirect=True)
     def test_d9p(self, f, d, a, w, ds):
         ds.index
-        if f[0] == "all":
-            particle_type = True
-        else:
-            particle_type = False
-        fv = field_values(ds, f, d, particle_type=particle_type)
+        fv = field_values(ds, f, d)
         self.hashes.update({'field_values' : fv})
         if f[0] not in ds.particle_types:
             ppv = pixelized_projection_values(ds, a, f, w, d)
