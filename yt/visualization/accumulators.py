@@ -1,5 +1,4 @@
 import numpy as np
-
 from unyt.array import ustack
 
 from yt import YTArray
@@ -23,34 +22,35 @@ def _accumulate_vector_field(path, field_vals):
     where :math:`C` is the path being integrated along, :math:`\vec{a}` is
     the vector field being integrated, and :math:`d\vec{r}` points along the
     path :math:`C`. This is equivalent to:
-    
+
     ..math::
 
-        \lim_{N \rightarrow \infty} \sum_{p=1}^N \vec{a}(x_p, y_p, ...) \cdot \Delta \vec{r}_p
-        
+    \lim_{N\rightarrow\infty}\sum_{p=1}^N\vec{a}(x_p,y_p,...)\cdot\Delta\vec{r}_p
+
     with the understanding that :math:`\Delta \vec{r}_p \rightarrow 0` as
     :math:`N \rightarrow \infty`.
-        
+
     The vector pointing along the segment connecting two adjacent points is:
-    
+
     ..math::
-    
+
         \Delta\vec{r}_p = (\vec{r}_{p+1} - \vec{r}_p)
-        
+
     so the full dot product can be written out as:
 
     ..math::
-        I = \lim_{N \rightarrow \infty}\sum_{p=1}^N\sum_{i=1}^n a_{p,i}(r_{p+1,i}-r_{p,i})
-        
+    I = \lim_{N \rightarrow \infty}\sum_{p=1}^N\sum_{i=1}^n a_{p,i}(r_{p+1,i}-r_{p,i})
+
     where :math:`n` is the number of dimensions.
 
-    This can be done as a matrix operation. If :math:`\vec{r} \equiv \vec{r}_{p+1} - \vec{r}_p`
-    then the above sum is (leaving out the limit):
-    
+    This can be done as a matrix operation. If
+    :math:`\vec{r} \equiv \vec{r}_{p+1} - \vec{r}_p` then the above sum is
+    (leaving out the limit):
+
     ..math::
-    
-        I = \vec{a}_1 \dot \vec{r}_1 + \vec{a}_2 \cdot \vec{r}_2 \ldots \vec{a}_N \cdot \vec{r}_N
-        
+
+    I =\vec{a}_1\dot\vec{r}_1+\vec{a}_2\cdot\vec{r}_2\ldots\vec{a}_N\cdot\vec{r}_N
+
     If we write the matrix :math:`A = ([a1x, a1y, ...], [a2x, a2y, ...], ...)`
     and :math:`R = ([r1x, r1y, ...], [r2x, r2y, ...], ...)^T`, then the dot
     products in the sum are the diagonal elements of the resulting matrix
@@ -59,17 +59,17 @@ def _accumulate_vector_field(path, field_vals):
 
     Parameters
     ----------
-    p : YTArray 
+    p : YTArray
         The path to be integrated along
 
-    field_vals : YTArray 
+    field_vals : YTArray
         An array containing the components of the vector field to be
         integrated. The values are sampled at the starting point of
         each path segment as well as the endpoint for the last segment
 
     Returns
     -------
-        accum : YTArray 
+        accum : YTArray
             The cumulative value of the field integral at each path
             segment
     """
@@ -87,26 +87,26 @@ def _accumulate_scalar_field(p, field_vals):
     This function integrates a scalar field along a path. It uses a
     similar method to that in _accumulate_vector_field, but the integral
     is now:
-    
+
     ..math::
-    
+
         I = \int_C \phi(x1,x2,...,xn)d\vec{r}
 
     Parameters
     ----------
-    p : YTArray 
+    p : YTArray
         The path to be integrated along
 
-    field_vals : YTArray 
+    field_vals : YTArray
         An array containing the values of the scalar field to be
         integrated at the location of the starting point of each
         path segment as well as the endpoint for the last segment
 
     Returns
     -------
-    accum : YTArray 
+    accum : YTArray
         The cumulative value of the field integral at each path
-        segment 
+        segment
     """
     # https://en.wikipedia.org/wiki/Line_integral
     # np.linalg.norm returns a ndarray, so when multiplied by field_vals, which
@@ -130,18 +130,19 @@ class Accumulators:
     accumulated value of the field is stored at each point along the
     path, allowing the user to query this information.
     """
+
     def __init__(self, paths, ds):
-        self.paths      = []
-        self.ds         = ds
-        self.ad         = ds.all_data()
-        self.accum      = []
-        self.left_edge  = self.ds.domain_left_edge
+        self.paths = []
+        self.ds = ds
+        self.ad = ds.all_data()
+        self.accum = []
+        self.left_edge = self.ds.domain_left_edge
         self.right_edge = self.ds.domain_right_edge
         # Make sure that the path has proper units. If no units are
         # specified, assume code units
         for p in paths:
-            if not isinstance(p, YTArray) or p.units.is_dimensionless: 
-                self.paths.append(self.ds.arr(p, 'code_length'))
+            if not isinstance(p, YTArray) or p.units.is_dimensionless:
+                self.paths.append(self.ds.arr(p, "code_length"))
             else:
                 self.paths.append(p.to(self.ds.length_unit))
 
@@ -151,7 +152,7 @@ class Accumulators:
 
         Parameters
         ----------
-        field : list 
+        field : list
             Either the scalar field to add to the tree or an iterable
             containing the components of the vector field to add.
 
@@ -199,8 +200,8 @@ class Accumulators:
         data = [d.flatten() for d in data]
         data = ustack(data, axis=1)
         # Cell width
-        node_left_edge = self.ds.arr(node.get_left_edge(), 'code_length')
-        node_right_edge = self.ds.arr(node.get_right_edge(), 'code_length')
+        node_left_edge = self.ds.arr(node.get_left_edge(), "code_length")
+        node_right_edge = self.ds.arr(node.get_right_edge(), "code_length")
         cell_size = (node_right_edge - node_left_edge) / ncells_per_dim
         while idx < npts:
             # Make sure point is within domain
@@ -213,13 +214,13 @@ class Accumulators:
             # Figure out which cell in the node the point falls within
             # Origin of node can be offset from origin of volume,
             # so we have to subtract it off to get the right cell indices
-            cell_ind = ((path[idx] - node_left_edge) / cell_size).astype('i8')
+            cell_ind = ((path[idx] - node_left_edge) / cell_size).astype("i8")
             # Access the value of the field at that index. Accessing a single
             # element of a multi-dimensional array using another array is
-            # problematic. Flatten and use a row-major index, indstead  
-            I = np.ravel_multi_index(cell_ind, ncells_per_dim) 
+            # problematic. Flatten and use a row-major index, indstead
+            I = np.ravel_multi_index(cell_ind, ncells_per_dim)
             # Get the value of each component for the current cell
-            vals[idx] = data[I] 
+            vals[idx] = data[I]
             # See if next point is still within the same node (if the next point
             # is still in range of the array)
             idx += 1
@@ -229,7 +230,7 @@ class Accumulators:
                 if np.any(left_check | right_check):
                     vals, idx = self._get_path_field_values(tree, path, idx, vals, npts)
         return vals, idx
-                
+
     def accumulate(self, field, is_vector=None):
         r"""
         This function is the driver function for integrating the desired
@@ -267,7 +268,7 @@ class Accumulators:
             npts = len(p)
             if npts < 2:
                 raise ValueError("Invalid path. Must have at least 2 points.")
-            values = YTArray(np.zeros(p.shape), self.ad[field[0]].units) 
+            values = YTArray(np.zeros(p.shape), self.ad[field[0]].units)
             values, _ = self._get_path_field_values(tree, p, 0, values, npts)
             if is_vector:
                 self.accum.append(_accumulate_vector_field(p, values))
