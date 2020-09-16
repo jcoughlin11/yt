@@ -88,17 +88,23 @@ Multipanel with Axes Labels
 This illustrates how to use a SlicePlot to control a multipanel plot.  This
 plot uses axes labels to illustrate the length scales in the plot.
 See :ref:`slice-plots` and the
-`Matplotlib AxesGrid Object <http://matplotlib.org/mpl_toolkits/axes_grid/api/axes_grid_api.html>`_
+`Matplotlib AxesGrid Object <https://matplotlib.org/mpl_toolkits/axes_grid/api/axes_grid_api.html>`_
 for more information.
 
 .. yt_cookbook:: multiplot_2x2.py
+
+The above example gives you full control over the plots, but for most
+purposes, the ``export_to_mpl_figure`` method is a simpler option,
+allowing us to make a similar plot as:
+
+.. yt_cookbook:: multiplot_export_to_mpl.py
 
 Multipanel with PhasePlot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This illustrates how to use PhasePlot in a multipanel plot.
 See :ref:`how-to-make-2d-profiles` and the
-`Matplotlib AxesGrid Object <http://matplotlib.org/mpl_toolkits/axes_grid/api/axes_grid_api.html>`_
+`Matplotlib AxesGrid Object <https://matplotlib.org/mpl_toolkits/axes_grid/api/axes_grid_api.html>`_
 for more information.
 
 .. yt_cookbook:: multiplot_phaseplot.py
@@ -108,7 +114,7 @@ Time Series Multipanel
 
 This illustrates how to create a multipanel plot of a time series dataset.
 See :ref:`projection-plots`, :ref:`time-series-analysis`, and the
-`Matplotlib AxesGrid Object <http://matplotlib.org/mpl_toolkits/axes_grid/api/axes_grid_api.html>`_
+`Matplotlib AxesGrid Object <https://matplotlib.org/mpl_toolkits/axes_grid/api/axes_grid_api.html>`_
 for more information.
 
 .. yt_cookbook:: multiplot_2x2_time_series.py
@@ -120,7 +126,7 @@ This illustrates how to create a multipanel plot of slices along the coordinate
 axes.  To focus on what's happening in the x-y plane, we make an additional
 Temperature slice for the bottom-right subpanel.
 See :ref:`slice-plots` and the
-`Matplotlib AxesGrid Object <http://matplotlib.org/mpl_toolkits/axes_grid/api/axes_grid_api.html>`_
+`Matplotlib AxesGrid Object <https://matplotlib.org/mpl_toolkits/axes_grid/api/axes_grid_api.html>`_
 for more information.
 
 .. yt_cookbook:: multiplot_2x2_coordaxes_slice.py
