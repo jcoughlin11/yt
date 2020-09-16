@@ -181,3 +181,7 @@ TestVROrientation:
 TestVolumeRenderMesh:
     - vr_mesh_answers_000_pytest.yaml
     - vr_mesh_answers_raw_000_pytest.h5
+
+TestAccumulators:
+    - accumulators_answers_000_pytest.yaml
+    - accumulators_answers_raw_000_pytest.yaml
